@@ -3,88 +3,107 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check if user is authenticated
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to check if user is the owner
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Helper function to get user role
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
     
-    // Helper function to check if user is admin
     function isAdmin() {
       return isAuthenticated() && getUserRole() == 'admin';
     }
     
-    // Helper function to check if user is coordinator
     function isCoordinator() {
-      return isAuthenticated() && getUserRole() == 'coordinator';
+      return isAuthenticated() && (getUserRole() == 'coordinator' || getUserRole() == 'admin');
     }
     
-    // Helper function to check if user is student
+    function isTeacher() {
+      return isAuthenticated() && getUserRole() == 'teacher';
+    }
+    
     function isStudent() {
       return isAuthenticated() && getUserRole() == 'student';
     }
     
-    // Users collection - users can read their own data, admins can read all
+    // Users collection
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isAuthenticated() && (isOwner(userId) || isCoordinator());
       allow create: if isAuthenticated() && isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
     
-    // Courses collection - everyone can read, only admins and coordinators can write
+    // Courses collection
     match /courses/{courseId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() || isCoordinator();
-      allow update: if isAdmin() || isCoordinator();
+      allow create, update: if isCoordinator();
       allow delete: if isAdmin();
     }
     
-    // Enrollments collection - students can read their own, coordinators and admins can read all
+    // Enrollments collection
     match /enrollments/{enrollmentId} {
-      allow read: if isAuthenticated() && 
-                     (resource.data.studentId == request.auth.uid || 
-                      isAdmin() || 
-                      isCoordinator());
-      allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid;
-      allow update: if isAdmin() || isCoordinator();
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid || 
+        isCoordinator() ||
+        isTeacher()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isCoordinator();
       allow delete: if isAdmin();
     }
     
-    // Grades collection - students can read their own, coordinators and admins can manage
+    // Scheduled Classes collection
+    match /scheduled_classes/{classId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isTeacher() || isCoordinator();
+      allow delete: if isCoordinator();
+    }
+    
+    // Class Attendance collection
+    match /class_attendance/{attendanceId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        isTeacher() ||
+        isCoordinator()
+      );
+      allow create, update: if isTeacher() || isCoordinator();
+      allow delete: if isAdmin();
+    }
+    
+    // Grades collection
     match /grades/{gradeId} {
-      allow read: if isAuthenticated() && 
-                     (resource.data.studentId == request.auth.uid || 
-                      isAdmin() || 
-                      isCoordinator());
-      allow create, update: if isAdmin() || isCoordinator();
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid || 
+        isCoordinator() ||
+        isTeacher()
+      );
+      allow create, update: if isTeacher() || isCoordinator();
       allow delete: if isAdmin();
     }
     
     // Assignments collection
     match /assignments/{assignmentId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAdmin() || isCoordinator();
+      allow create, update: if isTeacher() || isCoordinator();
       allow delete: if isAdmin();
     }
     
     // Submissions collection
     match /submissions/{submissionId} {
-      allow read: if isAuthenticated() && 
-                     (resource.data.studentId == request.auth.uid || 
-                      isAdmin() || 
-                      isCoordinator());
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid || 
+        isTeacher() ||
+        isCoordinator()
+      );
       allow create: if isAuthenticated() && request.resource.data.studentId == request.auth.uid;
-      allow update: if isOwner(resource.data.studentId) || isAdmin() || isCoordinator();
+      allow update: if isOwner(resource.data.studentId) || isTeacher() || isCoordinator();
       allow delete: if isAdmin();
     }
     

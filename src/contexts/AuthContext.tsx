@@ -12,14 +12,14 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 interface User {
   id: string;
   email: string;
-  role: 'student' | 'coordinator' | 'admin';
+  role: 'student' | 'coordinator' | 'teacher' | 'admin';
   name: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: 'student' | 'coordinator' | 'admin') => Promise<boolean>;
-  signup: (email: string, password: string, name: string, role: 'student' | 'coordinator' | 'admin') => Promise<boolean>;
+  login: (email: string, password: string, role: 'student' | 'coordinator' | 'teacher' | 'admin') => Promise<boolean>;
+  signup: (email: string, password: string, name: string, role: 'student' | 'coordinator' | 'teacher' | 'admin') => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string, role: 'student' | 'coordinator' | 'admin') => {
+  const login = async (email: string, password: string, role: 'student' | 'coordinator' | 'teacher' | 'admin') => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, name: string, role: 'student' | 'coordinator' | 'admin') => {
+  const signup = async (email: string, password: string, name: string, role: 'student' | 'coordinator' | 'teacher' | 'admin') => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       

@@ -12,7 +12,7 @@ import { Sparkles } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'student' | 'coordinator'>('student');
+  const [role, setRole] = useState<'student' | 'coordinator' | 'teacher'>('student');
   const navigate = useNavigate();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -28,6 +28,7 @@ const Login = () => {
       });
       
       if (role === 'student') navigate('/student-dashboard');
+      else if (role === 'teacher') navigate('/teacher-dashboard');
       else navigate('/coordinator-dashboard');
     } else {
       toast({
@@ -66,8 +67,9 @@ const Login = () => {
             <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
             
             <Tabs defaultValue="student" onValueChange={(v) => setRole(v as any)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="student">Student</TabsTrigger>
+                <TabsTrigger value="teacher">Teacher</TabsTrigger>
                 <TabsTrigger value="coordinator">Coordinator</TabsTrigger>
               </TabsList>
             </Tabs>

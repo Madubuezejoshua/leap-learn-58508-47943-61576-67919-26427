@@ -26,6 +26,9 @@ const StudentDashboard = () => {
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold font-heading">Student Dashboard</h1>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/courses')} variant="outline" size="sm">
+              Browse Courses
+            </Button>
             <span className="text-sm text-muted-foreground">Welcome, {user?.name}</span>
             <Button onClick={handleLogout} variant="outline" size="sm">
               <LogOut className="w-4 h-4 mr-2" />
